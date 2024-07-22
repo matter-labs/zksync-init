@@ -18,8 +18,9 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "cross-env NODE_ENV=development node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
     "typecheck": "tsc -p . --noEmit",
-    "lint": "eslint . --ext ./src/* --fix --ignore-path .gitignore --no-error-on-unmatched-pattern --max-warnings=0",
-    "commitlint": "commitlint --edit"
+    "lint": "eslint . --ext ./{src,test}/* --fix --ignore-path .gitignore --no-error-on-unmatched-pattern --max-warnings=0",
+    "commitlint": "commitlint --edit",
+    "test": "jest --verbose"
   },
   "keywords": [
     "zksync",
@@ -58,11 +59,14 @@
     "@matterlabs/prettier-config": "^1.0.3",
     "@semantic-release/changelog": "^6.0.3",
     "@types/inquirer": "^8.0.2",
+    "@types/jest": "^29.5.11",
     "@types/node": "^18.17.12",
     "@types/update-notifier": "^6.0.8",
     "husky": "^8.0.3",
+    "jest": "^29.7.0",
     "lint-staged": "^14.0.1",
     "semantic-release": "^22.0.8",
+    "ts-jest": "^29.1.2",
     "ts-node": "^10.9.1",
     "tsc-files": "^1.1.4",
     "typescript": "^5.2.2"

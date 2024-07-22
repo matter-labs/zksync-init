@@ -1,0 +1,44 @@
+name: Tests
+
+on: pull_request
+
+jobs:
+  tests:
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        node-version: ['18.17.1', '20.11.0'] # lts/* for lts node
+    runs-on: ${{ matrix.os }}
+
+    name: '${{ matrix.os }} / Node ${{ matrix.node-version }}'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # Second 'npm i' call is required to avoid CI issue with wrong build package version detection
+      - name: Install dependencies and build
+        run: |
+          npm ci && npm run build && npm i -g .
+          echo "zksync-cli version: " && npx zksync-cli --version
+
+      - name: Run tests
+        env: 
+          CI: true
+          E2E_TESTNET_PK: ${{ secrets.E2E_TESTNET_PK }}
+        run: |
+          echo "Run tests"
+            if [ $RUNNER_OS != 'Linux' ]; then
+                echo "Run without docker tests"
+                npx jest --verbose --testPathIgnorePatterns=dev.test.ts
+            else
+                echo "Run all tests"
+                npx jest --verbose --testPathPattern=
+            fi
+        shell: bash

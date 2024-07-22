@@ -7,3 +7,6 @@ bin
 
 # Workflow
 junit.xml
+
+# IDEA
+.idea
