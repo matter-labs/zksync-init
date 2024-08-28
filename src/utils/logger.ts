@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { format, createLogger, transports } from "winston";
+import { createLogger, format, transports } from "winston";
 
 import { hasColor } from "./helpers.js";
 

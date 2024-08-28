@@ -1,21 +1,30 @@
 import chalk from "chalk";
 import { Option } from "commander";
 
+import { executeCommand } from "../../utils/helpers.js";
+import Logger from "../../utils/logger.js";
 import Program from "./command.js";
 import { createModulesFolder, modulesPath } from "./modules/Module.js";
 import { modulesConfigHandler } from "./ModulesConfigHandler.js";
-import { executeCommand } from "../../utils/helpers.js";
-import Logger from "../../utils/logger.js";
 
-const packageOption = new Option("--package", "Update NPM package instead of module");
-const forceOption = new Option("--force", "Force update module (skip version check)");
+const packageOption = new Option(
+  "--package",
+  "Update NPM package instead of module"
+);
+const forceOption = new Option(
+  "--force",
+  "Force update module (skip version check)"
+);
 
 type ModuleUpdateOptions = {
   force?: boolean;
   package?: boolean;
 };
 
-export const handler = async (moduleNames: string[], options: ModuleUpdateOptions = {}) => {
+export const handler = async (
+  moduleNames: string[],
+  options: ModuleUpdateOptions = {}
+) => {
   try {
     if (options.package) {
       createModulesFolder();
@@ -31,7 +40,9 @@ export const handler = async (moduleNames: string[], options: ModuleUpdateOption
       const modules = await modulesConfigHandler.getAllModules();
       for (const moduleName of moduleNames) {
         Logger.info("");
-        const module = modules.find((module) => module.package.name === moduleName);
+        const module = modules.find(
+          (module) => module.package.name === moduleName
+        );
         if (!module) {
           Logger.error(`Module "${moduleName}" is not installed`);
           continue;
@@ -48,7 +59,9 @@ export const handler = async (moduleNames: string[], options: ModuleUpdateOption
             }
           }
           if (!latestVersion) {
-            Logger.error(`Latest version wasn't found for module "${moduleName}"`);
+            Logger.error(
+              `Latest version wasn't found for module "${moduleName}"`
+            );
             continue;
           }
 
@@ -57,14 +70,18 @@ export const handler = async (moduleNames: string[], options: ModuleUpdateOption
           );
           await module.update();
         } catch (error) {
-          Logger.error(`There was an error while updating module "${moduleName}":`);
+          Logger.error(
+            `There was an error while updating module "${moduleName}":`
+          );
           Logger.error(error);
           continue;
         }
       }
     }
 
-    Logger.info(`\nTo make sure changes are applied use: \`${chalk.magentaBright("npx zksync-cli dev start")}\``);
+    Logger.info(
+      `\nTo make sure changes are applied use: \`${chalk.magentaBright("npx zksync-cli dev start")}\``
+    );
   } catch (error) {
     Logger.error("There was an error while updating module:");
     Logger.error(error);

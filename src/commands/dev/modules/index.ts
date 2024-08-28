@@ -9,7 +9,9 @@ export const handler = async () => {
     const modules = await modulesConfigHandler.getAllModules();
     if (!modules.length) {
       Logger.warn("There are no modules installed");
-      Logger.info("You can install modules with: `npx zksync-cli dev install [module-name...]");
+      Logger.info(
+        "You can install modules with: `npx zksync-cli dev install [module-name...]"
+      );
       return;
     }
 
@@ -20,7 +22,9 @@ export const handler = async () => {
       if (moduleVersion) {
         logStr += ` ${moduleVersion}`;
       }
-      logStr += chalk.blueBright(` - ${module.package.name}${chalk.gray("@" + module.package.version)}`);
+      logStr += chalk.blueBright(
+        ` - ${module.package.name}${chalk.gray("@" + module.package.version)}`
+      );
       if (module.package.symlinked) {
         logStr += chalk.blueBright(" (installed via --link)");
       }
@@ -32,4 +36,6 @@ export const handler = async () => {
   }
 };
 
-Program.command("modules").description("List currently installed modules").action(handler);
+Program.command("modules")
+  .description("List currently installed modules")
+  .action(handler);

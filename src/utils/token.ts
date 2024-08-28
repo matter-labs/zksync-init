@@ -50,11 +50,18 @@ export const getTokenInfo = async (
   l2Provider: Provider,
   l1Provider?: ethers.providers.JsonRpcProvider
 ): Promise<Omit<Token, "address"> & { address?: string }> => {
-  if (tokenAddress === ETH_TOKEN.address || tokenAddress === ETH_TOKEN.l1Address) {
+  if (
+    tokenAddress === ETH_TOKEN.address ||
+    tokenAddress === ETH_TOKEN.l1Address
+  ) {
     return ETH_TOKEN;
   }
 
-  const { address, l1Address } = await getTokenAddresses(tokenAddress, l2Provider, l1Provider);
+  const { address, l1Address } = await getTokenAddresses(
+    tokenAddress,
+    l2Provider,
+    l1Provider
+  );
   if (!address && !l1Provider) {
     throw new Error("Token with specified address was not found");
   }
@@ -88,7 +95,10 @@ export const getBalance = async (
   address: string,
   provider: Provider | ethers.providers.JsonRpcProvider
 ): Promise<BigNumberish> => {
-  if (tokenAddress === ETH_TOKEN.address || tokenAddress === ETH_TOKEN.l1Address) {
+  if (
+    tokenAddress === ETH_TOKEN.address ||
+    tokenAddress === ETH_TOKEN.l1Address
+  ) {
     return provider.getBalance(address);
   }
   const balanceAbi = "balanceOf(address)";

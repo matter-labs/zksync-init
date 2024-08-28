@@ -30,7 +30,8 @@ const requireModule = async (modulePath: string): Promise<Module> => {
 const getPackageByPath = async (modulePath: string): Promise<Package> => {
   const modulePackagePath = path.join(modulePath, "package.json");
   const packageContent = fs.readFileSync(modulePackagePath, "utf-8");
-  const { name, version, main }: Package & { main: string } = JSON.parse(packageContent);
+  const { name, version, main }: Package & { main: string } =
+    JSON.parse(packageContent);
   return {
     module: await requireModule(path.join(modulePath, main)),
     name,
@@ -75,7 +76,9 @@ const findInstalledModules = async (): Promise<Package[]> => {
   }
 
   const packageContent = fs.readFileSync(modulePackagePath, "utf-8");
-  const modulesPackage: { dependencies?: Record<Package["name"], Package["version"]> } = JSON.parse(packageContent);
+  const modulesPackage: {
+    dependencies?: Record<Package["name"], Package["version"]>;
+  } = JSON.parse(packageContent);
   if (!modulesPackage.dependencies) {
     return [];
   }
@@ -100,9 +103,12 @@ export const findDefaultModules = async (): Promise<Package[]> => {
   type PackageJSON = { name: string; version: string };
   const require = createRequire(import.meta.url);
   const packages = {
-    "zkcli-in-memory-node": require("zkcli-in-memory-node/package.json") as PackageJSON,
-    "zkcli-dockerized-node": require("zkcli-dockerized-node/package.json") as PackageJSON,
-    "zkcli-block-explorer": require("zkcli-block-explorer/package.json") as PackageJSON,
+    "zkcli-in-memory-node":
+      require("zkcli-in-memory-node/package.json") as PackageJSON,
+    "zkcli-dockerized-node":
+      require("zkcli-dockerized-node/package.json") as PackageJSON,
+    "zkcli-block-explorer":
+      require("zkcli-block-explorer/package.json") as PackageJSON,
     "zkcli-portal": require("zkcli-portal/package.json") as PackageJSON,
   } as const;
 

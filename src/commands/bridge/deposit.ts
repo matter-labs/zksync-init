@@ -1,7 +1,6 @@
 import inquirer from "inquirer";
 import ora from "ora";
 
-import Program from "./command.js";
 import {
   amountOptionCreate,
   chainWithL1Option,
@@ -24,9 +23,14 @@ import {
 } from "../../utils/helpers.js";
 import Logger from "../../utils/logger.js";
 import { getBalance, getTokenInfo } from "../../utils/token.js";
-import { isDecimalAmount, isAddress, isPrivateKey } from "../../utils/validators.js";
+import {
+  isAddress,
+  isDecimalAmount,
+  isPrivateKey,
+} from "../../utils/validators.js";
 import zeek from "../../utils/zeek.js";
 import { getChains } from "../config/chains.js";
+import Program from "./command.js";
 
 import type { DefaultTransferOptions } from "../../common/options.js";
 
@@ -39,7 +43,10 @@ export const handler = async (options: DepositOptions) => {
   try {
     Logger.debug(
       `Initial deposit options: ${JSON.stringify(
-        { ...options, ...(options.privateKey ? { privateKey: "<hidden>" } : {}) },
+        {
+          ...options,
+          ...(options.privateKey ? { privateKey: "<hidden>" } : {}),
+        },
         null,
         2
       )}`
@@ -52,7 +59,9 @@ export const handler = async (options: DepositOptions) => {
           message: chainWithL1Option.description,
           name: optionNameToParam(chainWithL1Option.long!),
           type: "list",
-          choices: chains.filter((e) => e.l1Chain).map((e) => ({ name: e.name, value: e.network })),
+          choices: chains
+            .filter((e) => e.l1Chain)
+            .map((e) => ({ name: e.name, value: e.network })),
           required: true,
           when(answers: DepositOptions) {
             if (answers.l1Rpc && answers.rpc) {
@@ -94,24 +103,42 @@ export const handler = async (options: DepositOptions) => {
       ...answers,
     };
 
-    Logger.debug(`Final deposit options: ${JSON.stringify({ ...options, privateKey: "<hidden>" }, null, 2)}`);
+    Logger.debug(
+      `Final deposit options: ${JSON.stringify({ ...options, privateKey: "<hidden>" }, null, 2)}`
+    );
 
     const fromChain = chains.find((e) => e.network === options.chain)?.l1Chain;
-    const fromChainLabel = fromChain && !options.l1Rpc ? fromChain.name : (options.l1Rpc ?? "Unknown chain");
+    const fromChainLabel =
+      fromChain && !options.l1Rpc
+        ? fromChain.name
+        : (options.l1Rpc ?? "Unknown chain");
     const toChain = chains.find((e) => e.network === options.chain);
-    const toChainLabel = toChain && !options.rpc ? toChain.name : (options.rpc ?? "Unknown chain");
+    const toChainLabel =
+      toChain && !options.rpc ? toChain.name : (options.rpc ?? "Unknown chain");
 
     const l1Provider = getL1Provider(options.l1Rpc ?? fromChain!.rpcUrl);
     const l2Provider = getL2Provider(options.rpc ?? toChain!.rpcUrl);
-    const senderWallet = getL2Wallet(options.privateKey, l2Provider, l1Provider);
-    const token = options.token ? await getTokenInfo(options.token!, l2Provider, l1Provider) : ETH_TOKEN;
-    const { decimalToBigNumber, bigNumberToDecimal } = useDecimals(token.decimals);
+    const senderWallet = getL2Wallet(
+      options.privateKey,
+      l2Provider,
+      l1Provider
+    );
+    const token = options.token
+      ? await getTokenInfo(options.token!, l2Provider, l1Provider)
+      : ETH_TOKEN;
+    const { decimalToBigNumber, bigNumberToDecimal } = useDecimals(
+      token.decimals
+    );
     if (!token.l1Address) {
-      throw new Error(`Token ${token.symbol} doesn't exist on ${fromChainLabel} therefore it cannot be deposited`);
+      throw new Error(
+        `Token ${token.symbol} doesn't exist on ${fromChainLabel} therefore it cannot be deposited`
+      );
     }
 
     Logger.info("\nDeposit:");
-    Logger.info(` From: ${getAddressFromPrivateKey(answers.privateKey)} (${fromChainLabel})`);
+    Logger.info(
+      ` From: ${getAddressFromPrivateKey(answers.privateKey)} (${fromChainLabel})`
+    );
     Logger.info(` To: ${options.recipient} (${toChainLabel})`);
     Logger.info(
       ` Amount: ${bigNumberToDecimal(decimalToBigNumber(options.amount))} ${token.symbol} ${
@@ -133,10 +160,16 @@ export const handler = async (options: DepositOptions) => {
       Logger.info("\nDeposit sent:");
       Logger.info(` Transaction hash: ${depositHandle.hash}`);
       if (fromChain?.explorerUrl) {
-        Logger.info(` Transaction link: ${fromChain.explorerUrl}/tx/${depositHandle.hash}`);
+        Logger.info(
+          ` Transaction link: ${fromChain.explorerUrl}/tx/${depositHandle.hash}`
+        );
       }
 
-      const senderBalance = await getBalance(token.l1Address, senderWallet.address, l1Provider);
+      const senderBalance = await getBalance(
+        token.l1Address,
+        senderWallet.address,
+        l1Provider
+      );
       Logger.info(
         `\nSender L1 balance after transaction: ${bigNumberToDecimal(senderBalance)} ${token.symbol} ${
           token.name ? `(${token.name})` : ""

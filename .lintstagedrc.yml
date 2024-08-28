@@ -1,4 +1,4 @@
-"*.{js,ts,vue}":
+"*.{js,ts}":
   - cspell lint --no-must-find-files --files
   - prettier --write --ignore-unknown
   - eslint --fix --max-warnings=0

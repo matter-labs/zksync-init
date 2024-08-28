@@ -3,10 +3,14 @@ import { compare } from "compare-versions";
 
 import Logger from "./utils/logger.js";
 import { getNodeVersion } from "./utils/node.js";
-import { Package, checkForUpdates } from "./utils/package.js";
+import { checkForUpdates, Package } from "./utils/package.js";
 
 const program = new Command();
-program.name(Package.name).description(Package.description).version(Package.version).showHelpAfterError();
+program
+  .name(Package.name)
+  .description(Package.description)
+  .version(Package.version)
+  .showHelpAfterError();
 program.hook("preAction", async () => {
   const nodeVersion = await getNodeVersion();
   const minimumNodeVersion = "18.0.0";
@@ -17,7 +21,9 @@ program.hook("preAction", async () => {
       process.exit(1);
     }
   } catch {
-    Logger.warn(`Failed to check Node.js version. Make sure you are using version ${minimumNodeVersion} or higher`);
+    Logger.warn(
+      `Failed to check Node.js version. Make sure you are using version ${minimumNodeVersion} or higher`
+    );
   }
 
   await checkForUpdates();

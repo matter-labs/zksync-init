@@ -29,7 +29,9 @@ const getModuleUpdatesInfo = async (): Promise<ModuleUpdatesInfo> => {
   }
 };
 
-const checkModulesForUpdates = async (modules: Module[]): Promise<ModuleUpdatesInfo> => {
+const checkModulesForUpdates = async (
+  modules: Module[]
+): Promise<ModuleUpdatesInfo> => {
   const moduleUpdatesInfo = await getModuleUpdatesInfo();
   let hadChanges = false;
 
@@ -38,7 +40,9 @@ const checkModulesForUpdates = async (modules: Module[]): Promise<ModuleUpdatesI
       const moduleInfo = moduleUpdatesInfo[module.package.name];
       if (moduleInfo) {
         const hoursSinceLastUpdate =
-          (new Date().getTime() - new Date(moduleInfo.lastUpdateCheck).getTime()) / (1000 * 3600);
+          (new Date().getTime() -
+            new Date(moduleInfo.lastUpdateCheck).getTime()) /
+          (1000 * 3600);
         if (hoursSinceLastUpdate < 1) return;
       }
 
@@ -60,21 +64,28 @@ const checkModulesForUpdates = async (modules: Module[]): Promise<ModuleUpdatesI
           hadChanges = true;
         }
       } catch (error) {
-        Logger.error(`There was an error while checking for updates for module "${module.name}":`);
+        Logger.error(
+          `There was an error while checking for updates for module "${module.name}":`
+        );
         Logger.error(error);
       }
     })
   );
 
   if (hadChanges) {
-    writeFile(moduleUpdatesInfoPath, JSON.stringify(moduleUpdatesInfo, null, 2));
+    writeFile(
+      moduleUpdatesInfoPath,
+      JSON.stringify(moduleUpdatesInfo, null, 2)
+    );
   }
 
   return moduleUpdatesInfo;
 };
 
 export const getModulesRequiringUpdates = async (modules: Module[]) => {
-  const installedModules = await Promise.all(modules.filter((module) => module.isInstalled()));
+  const installedModules = await Promise.all(
+    modules.filter((module) => module.isInstalled())
+  );
   const updateInfo = await checkModulesForUpdates(installedModules);
 
   return installedModules
@@ -82,7 +93,8 @@ export const getModulesRequiringUpdates = async (modules: Module[]) => {
       module,
       currentVersion: module.version,
       latestVersion: updateInfo[module.package.name]?.latest,
-      requiresUpdate: module.version !== updateInfo[module.package.name]?.latest,
+      requiresUpdate:
+        module.version !== updateInfo[module.package.name]?.latest,
     }))
     .filter((e) => e.requiresUpdate);
 };

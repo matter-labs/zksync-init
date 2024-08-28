@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
 
-import { useDecimals } from "../../src/utils/formatters";
+import { useDecimals } from "../../src/utils/formatters.js";
 
 import type { BigNumberish } from "ethers";
 
@@ -16,7 +16,9 @@ describe("useDecimals", () => {
     test("ETH decimal value", () => {
       const { decimalToBigNumber } = useDecimals(18);
       expectTypeOf(decimalToBigNumber("1.5")).toEqualTypeOf<BigNumberish>();
-      expect(decimalToBigNumber("1.5").toString()).toEqual("1500000000000000000");
+      expect(decimalToBigNumber("1.5").toString()).toEqual(
+        "1500000000000000000"
+      );
     });
 
     test("USDC decimal value", () => {

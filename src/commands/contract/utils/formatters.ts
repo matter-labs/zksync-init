@@ -36,15 +36,22 @@ export const getInputValues = (inputsString: string): string[] => {
 };
 
 export const getMethodId = (method: string) => {
-  const methodSignature = getFragmentFromSignature(method).format(ethers.utils.FormatTypes.sighash);
+  const methodSignature = getFragmentFromSignature(method).format(
+    ethers.utils.FormatTypes.sighash
+  );
   return ethers.utils.id(methodSignature).substring(2, 10); // remove 0x and take first 4 bytes
 };
 
-export const getMethodsFromAbi = (abi: ABI, type: "read" | "write"): ethers.utils.FunctionFragment[] => {
+export const getMethodsFromAbi = (
+  abi: ABI,
+  type: "read" | "write"
+): ethers.utils.FunctionFragment[] => {
   if (type === "read") {
     const readMethods = abi.filter(
       (fragment) =>
-        fragment.type === "function" && (fragment.stateMutability === "view" || fragment.stateMutability === "pure")
+        fragment.type === "function" &&
+        (fragment.stateMutability === "view" ||
+          fragment.stateMutability === "pure")
     );
     const contractInterface = new ethers.utils.Interface(readMethods);
     return contractInterface.fragments as ethers.utils.FunctionFragment[];
@@ -52,7 +59,8 @@ export const getMethodsFromAbi = (abi: ABI, type: "read" | "write"): ethers.util
     const writeMethods = abi.filter(
       (fragment) =>
         fragment.type === "function" &&
-        (fragment.stateMutability === "nonpayable" || fragment.stateMutability === "payable")
+        (fragment.stateMutability === "nonpayable" ||
+          fragment.stateMutability === "payable")
     );
     const contractInterface = new ethers.utils.Interface(writeMethods);
     return contractInterface.fragments as ethers.utils.FunctionFragment[];

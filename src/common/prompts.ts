@@ -7,7 +7,9 @@ import { formatSeparator } from "../utils/formatters.js";
 
 import type { L2Chain } from "../data/chains.js";
 
-export const promptChain = async <T extends Record<string, unknown> | undefined>(
+export const promptChain = async <
+  T extends Record<string, unknown> | undefined,
+>(
   prompt: { message: string; name: string },
   chains?: { filter?: (chain: L2Chain) => boolean },
   options?: T
@@ -16,7 +18,9 @@ export const promptChain = async <T extends Record<string, unknown> | undefined>
   const allChains = [...l2Chains, ...customChains];
 
   if (options?.[prompt.name]) {
-    const chain = allChains.find((chain) => chain.network === options[prompt.name]);
+    const chain = allChains.find(
+      (chain) => chain.network === options[prompt.name]
+    );
     if (chain) {
       return chain;
     } else {
@@ -37,10 +41,12 @@ export const promptChain = async <T extends Record<string, unknown> | undefined>
             value: chain.network,
           })),
           formatSeparator("Custom chains"),
-          ...customChains.filter(chains?.filter || (() => true)).map((chain) => ({
-            name: chain.name + chalk.gray(` - ${chain.network}`),
-            value: chain.network,
-          })),
+          ...customChains
+            .filter(chains?.filter || (() => true))
+            .map((chain) => ({
+              name: chain.name + chalk.gray(` - ${chain.network}`),
+              value: chain.network,
+            })),
           {
             name: chalk.greenBright("+") + " Add new chain",
             short: "Add new chain",

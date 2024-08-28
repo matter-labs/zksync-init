@@ -4,7 +4,13 @@ import inquirer from "inquirer";
 import Logger from "../../../utils/logger.js";
 import { packageManagers } from "../../../utils/packageManager.js";
 import { isPrivateKey } from "../../../utils/validators.js";
-import { askForTemplate, setupTemplate, askForPackageManager, successfulMessage, getUniqueValues } from "../utils.js";
+import {
+  askForPackageManager,
+  askForTemplate,
+  getUniqueValues,
+  setupTemplate,
+  successfulMessage,
+} from "../utils.js";
 
 import type { PackageManagerType } from "../../../utils/packageManager.js";
 import type { GenericTemplate } from "../index.js";
@@ -103,7 +109,9 @@ const logFoundryInfo = () => {
   const contractsDir = "/src";
   const deploymentScriptsDir = "/script";
   const tipMessage =
-    "- Tip: You can use the " + chalk.blueBright("--rpc-url") + " option to specify the network to deploy to.";
+    "- Tip: You can use the " +
+    chalk.blueBright("--rpc-url") +
+    " option to specify the network to deploy to.";
   const deployCommand = `- Deploy your contract: ${chalk.blueBright("forge script [OPTIONS] <PATH> [ARGS] --zksync")}`;
   const directoryOverview = `${chalk.magentaBright("Directory Overview:")}
   - Contracts: ${contractsDir}
@@ -120,7 +128,9 @@ const logHardhatInfo = (packageManager: PackageManagerType) => {
   const contractsDir = "/contracts";
   const deploymentScriptsDir = "/deploy";
   const tipMessage =
-    "- Tip: You can use the " + chalk.blueBright("--network") + " option to specify the network to deploy to.";
+    "- Tip: You can use the " +
+    chalk.blueBright("--network") +
+    " option to specify the network to deploy to.";
   const deployCommand = `- Deploy your contract: ${chalk.blueBright(packageManagers[packageManager].run("deploy"))}`;
   const directoryOverview = `${chalk.magentaBright("Directory Overview:")}
   - Contracts: ${contractsDir}
@@ -133,20 +143,33 @@ const logHardhatInfo = (packageManager: PackageManagerType) => {
   Logger.info(`${directoryOverview}\n\n${commandsOverview}`);
 };
 
-export default async (folderLocation: string, folderRelativePath: string, templateKey?: string) => {
+export default async (
+  folderLocation: string,
+  folderRelativePath: string,
+  templateKey?: string
+) => {
   let env: Record<string, string> = {};
   let template: Template;
   if (!templateKey) {
-    const { ethereumFramework }: { ethereumFramework: Template["ethereumFramework"] } = await inquirer.prompt([
-      {
-        message: "Ethereum framework",
-        name: "ethereumFramework",
-        type: "list",
-        choices: getUniqueValues(templates.map((template) => template.ethereumFramework)),
-        required: true,
-      },
-    ]);
-    template = await askForTemplate(templates.filter((template) => template.ethereumFramework === ethereumFramework));
+    const {
+      ethereumFramework,
+    }: { ethereumFramework: Template["ethereumFramework"] } =
+      await inquirer.prompt([
+        {
+          message: "Ethereum framework",
+          name: "ethereumFramework",
+          type: "list",
+          choices: getUniqueValues(
+            templates.map((template) => template.ethereumFramework)
+          ),
+          required: true,
+        },
+      ]);
+    template = await askForTemplate(
+      templates.filter(
+        (template) => template.ethereumFramework === ethereumFramework
+      )
+    );
   } else {
     template = templates.find((e) => e.value === templateKey)!;
     Logger.info(`Using ${chalk.magentaBright(template.name)} template`);

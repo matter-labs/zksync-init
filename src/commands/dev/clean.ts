@@ -1,6 +1,6 @@
+import Logger from "../../utils/logger.js";
 import Program from "./command.js";
 import { modulesConfigHandler } from "./ModulesConfigHandler.js";
-import Logger from "../../utils/logger.js";
 
 import type Module from "./modules/Module.js";
 
@@ -34,7 +34,9 @@ export const handler = async (modulePackageNames: string[]) => {
       const configModules = await modulesConfigHandler.getConfigModules();
       modules.push(...configModules);
     }
-    Logger.info(`Cleaning: ${modules.map((module) => module.name).join(", ")}...`);
+    Logger.info(
+      `Cleaning: ${modules.map((module) => module.name).join(", ")}...`
+    );
     await Promise.all(modules.map((module) => cleanModule(module)));
   } catch (error) {
     Logger.error("There was an error while cleaning the testing environment:");

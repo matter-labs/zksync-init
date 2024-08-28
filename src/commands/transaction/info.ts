@@ -5,20 +5,28 @@ import inquirer from "inquirer";
 import ora from "ora";
 import { utils } from "zksync-ethers";
 
-import Program from "./command.js";
 import { chainOption, l2RpcUrlOption } from "../../common/options.js";
 import { promptChain } from "../../common/prompts.js";
 import { ETH_TOKEN } from "../../utils/constants.js";
-import { useDecimals, convertBigNumbersToStrings, formatSeparator, getTimeAgo } from "../../utils/formatters.js";
+import {
+  convertBigNumbersToStrings,
+  formatSeparator,
+  getTimeAgo,
+  useDecimals,
+} from "../../utils/formatters.js";
 import { getL2Provider, optionNameToParam } from "../../utils/helpers.js";
 import Logger from "../../utils/logger.js";
 import { isTransactionHash } from "../../utils/validators.js";
 import { abiOption } from "../contract/common/options.js";
-import { getContractInformation, readAbiFromFile } from "../contract/utils/helpers.js";
+import {
+  getContractInformation,
+  readAbiFromFile,
+} from "../contract/utils/helpers.js";
+import Program from "./command.js";
 
-import type { L2Chain } from "../../data/chains.js";
 import type { Provider } from "zksync-ethers";
 import type { TransactionReceipt } from "zksync-ethers/src/types.js";
+import type { L2Chain } from "../../data/chains.js";
 
 type TransactionInfoOptions = {
   chain?: string;
@@ -29,7 +37,10 @@ type TransactionInfoOptions = {
   abi?: string;
 };
 
-const transactionHashOption = new Option("--tx, --transaction <transaction hash>", "Transaction hash");
+const transactionHashOption = new Option(
+  "--tx, --transaction <transaction hash>",
+  "Transaction hash"
+);
 const fullOption = new Option("--full", "Show all available data");
 const rawOption = new Option("--raw", "Show raw JSON response");
 
@@ -38,7 +49,11 @@ export const handler = async (options: TransactionInfoOptions) => {
     const transfers: { amount: BigNumber; from: string; to: string }[] = [];
     receipt.logs.forEach((log) => {
       try {
-        const parsed = utils.IERC20.decodeEventLog("Transfer", log.data, log.topics);
+        const parsed = utils.IERC20.decodeEventLog(
+          "Transfer",
+          log.data,
+          log.topics
+        );
         transfers.push({
           from: parsed.from,
           to: parsed.to,
@@ -61,30 +76,43 @@ export const handler = async (options: TransactionInfoOptions) => {
       totalFee,
       paidByPaymaster:
         !transfers.length ||
-        receipt.from !== transfers.find((transfer) => transfer.from === utils.BOOTLOADER_FORMAL_ADDRESS)?.to,
+        receipt.from !==
+          transfers.find(
+            (transfer) => transfer.from === utils.BOOTLOADER_FORMAL_ADDRESS
+          )?.to,
     };
   };
   const getDecodedMethodSignature = async (hexSignature: string) => {
     if (hexSignature === "0x") {
       return;
     }
-    return await fetch(`https://www.4byte.directory/api/v1/signatures/?format=json&hex_signature=${hexSignature}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    return await fetch(
+      `https://www.4byte.directory/api/v1/signatures/?format=json&hex_signature=${hexSignature}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
       .then((res) => res.json())
       .then((data) => data?.results?.[0]?.text_signature)
       .catch(() => undefined);
   };
-  const getAddressAndMethodInfo = async (address: string, calldata: string, provider: Provider, chain: L2Chain) => {
-    let contractInfo = await getContractInformation(chain, provider, address, { fetchImplementation: true }).catch(
-      () => undefined
-    );
+  const getAddressAndMethodInfo = async (
+    address: string,
+    calldata: string,
+    provider: Provider,
+    chain: L2Chain
+  ) => {
+    let contractInfo = await getContractInformation(chain, provider, address, {
+      fetchImplementation: true,
+    }).catch(() => undefined);
     const hexSignature = calldata.slice(0, 10);
     let decodedSignature: string | undefined;
-    let decodedArgs: { name?: string; type: string; value: string }[] | undefined;
+    let decodedArgs:
+      | { name?: string; type: string; value: string }[]
+      | undefined;
     if (options.abi) {
       if (!contractInfo) {
         contractInfo = {
@@ -97,10 +125,15 @@ export const handler = async (options: TransactionInfoOptions) => {
       }
     }
     if (contractInfo?.abi || contractInfo?.implementation?.abi) {
-      const initialAddressInterface = new ethers.utils.Interface(contractInfo?.abi || []);
-      const implementationInterface = new ethers.utils.Interface(contractInfo?.implementation?.abi || []);
+      const initialAddressInterface = new ethers.utils.Interface(
+        contractInfo?.abi || []
+      );
+      const implementationInterface = new ethers.utils.Interface(
+        contractInfo?.implementation?.abi || []
+      );
       const matchedMethod =
-        initialAddressInterface.getFunction(hexSignature) || implementationInterface.getFunction(hexSignature);
+        initialAddressInterface.getFunction(hexSignature) ||
+        implementationInterface.getFunction(hexSignature);
       if (matchedMethod) {
         decodedSignature = matchedMethod.format(ethers.utils.FormatTypes.full);
         if (decodedSignature.startsWith("function")) {
@@ -115,10 +148,15 @@ export const handler = async (options: TransactionInfoOptions) => {
 
     if (decodedSignature) {
       try {
-        const contractInterface = new ethers.utils.Interface([`function ${decodedSignature}`]);
+        const contractInterface = new ethers.utils.Interface([
+          `function ${decodedSignature}`,
+        ]);
         const inputs = contractInterface.getFunction(hexSignature).inputs;
         const encodedArgs = calldata.slice(10);
-        const decoded = ethers.utils.defaultAbiCoder.decode(inputs, `0x${encodedArgs}`);
+        const decoded = ethers.utils.defaultAbiCoder.decode(
+          inputs,
+          `0x${encodedArgs}`
+        );
         decodedArgs = inputs.map((input, index) => {
           return {
             name: input.name,
@@ -169,11 +207,12 @@ export const handler = async (options: TransactionInfoOptions) => {
     const l2Provider = getL2Provider(options.rpc ?? chain!.rpcUrl);
     const spinner = ora("Looking for transaction...").start();
     try {
-      const [transactionData, transactionDetails, transactionReceipt] = await Promise.all([
-        l2Provider.getTransaction(options.transaction!),
-        l2Provider.getTransactionDetails(options.transaction!),
-        l2Provider.getTransactionReceipt(options.transaction!),
-      ]);
+      const [transactionData, transactionDetails, transactionReceipt] =
+        await Promise.all([
+          l2Provider.getTransaction(options.transaction!),
+          l2Provider.getTransactionDetails(options.transaction!),
+          l2Provider.getTransactionReceipt(options.transaction!),
+        ]);
       if (!transactionData) {
         throw new Error("Transaction not found");
       }
@@ -182,12 +221,19 @@ export const handler = async (options: TransactionInfoOptions) => {
         hexSignature: methodHexSignature,
         decodedSignature: methodDecodedSignature,
         decodedArgs: methodDecodedArgs,
-      } = await getAddressAndMethodInfo(transactionData.to!, transactionData.data, l2Provider, chain);
+      } = await getAddressAndMethodInfo(
+        transactionData.to!,
+        transactionData.data,
+        l2Provider,
+        chain
+      );
       spinner.stop();
       if (options.raw) {
         Logger.info(
           JSON.stringify(
-            convertBigNumbersToStrings(transactionReceipt || transactionDetails || transactionData),
+            convertBigNumbersToStrings(
+              transactionReceipt || transactionDetails || transactionData
+            ),
             null,
             2
           ),
@@ -207,7 +253,10 @@ export const handler = async (options: TransactionInfoOptions) => {
       logString += "\nStatus: ";
       if (transactionDetails?.status === "failed") {
         logString += chalk.redBright("failed");
-      } else if (transactionDetails?.status === "included" || transactionDetails?.status === "verified") {
+      } else if (
+        transactionDetails?.status === "included" ||
+        transactionDetails?.status === "verified"
+      ) {
         logString += chalk.greenBright("completed");
       } else {
         logString += transactionDetails?.status || chalk.gray("N/A");
@@ -216,20 +265,30 @@ export const handler = async (options: TransactionInfoOptions) => {
       logString += `\nTo: ${transactionData.to}`;
       if (contractInfo?.implementation) {
         logString += chalk.gray("  |");
-        logString += chalk.gray(`  Implementation: ${contractInfo.implementation.address}`);
+        logString += chalk.gray(
+          `  Implementation: ${contractInfo.implementation.address}`
+        );
       }
       logString += `\nValue: ${bigNumberToDecimal(transactionData.value)} ETH`;
 
-      const initialFee = transactionData.gasLimit.mul(transactionData.gasPrice!);
-      const feeData = transactionReceipt ? getTransactionFeeData(transactionReceipt) : undefined;
+      const initialFee = transactionData.gasLimit.mul(
+        transactionData.gasPrice!
+      );
+      const feeData = transactionReceipt
+        ? getTransactionFeeData(transactionReceipt)
+        : undefined;
       logString += `\nFee: ${bigNumberToDecimal(feeData?.totalFee || initialFee)} ETH`;
       if (feeData?.paidByPaymaster) {
         logString += chalk.gray(" (paid by paymaster)");
       }
       if (feeData) {
         logString += chalk.gray("  |");
-        logString += chalk.gray(`  Initial: ${bigNumberToDecimal(initialFee)} ETH`);
-        logString += chalk.gray(`  Refunded: ${bigNumberToDecimal(feeData.refunded)} ETH`);
+        logString += chalk.gray(
+          `  Initial: ${bigNumberToDecimal(initialFee)} ETH`
+        );
+        logString += chalk.gray(
+          `  Refunded: ${bigNumberToDecimal(feeData.refunded)} ETH`
+        );
       }
 
       logString += "\nMethod: ";
@@ -245,7 +304,9 @@ export const handler = async (options: TransactionInfoOptions) => {
       logString = "";
 
       if (methodDecodedArgs) {
-        Logger.info(`\n${formatSeparator("Method arguments").line}`, { noFormat: true });
+        Logger.info(`\n${formatSeparator("Method arguments").line}`, {
+          noFormat: true,
+        });
         methodDecodedArgs.forEach((arg, index) => {
           if (index !== 0) {
             logString += "\n";

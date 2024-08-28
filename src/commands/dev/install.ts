@@ -1,14 +1,20 @@
 import chalk from "chalk";
 import { Option } from "commander";
 
-import Program from "./command.js";
-import { createModulesFolder, modulesPath } from "./modules/Module.js";
 import { executeCommand } from "../../utils/helpers.js";
 import Logger from "../../utils/logger.js";
+import Program from "./command.js";
+import { createModulesFolder, modulesPath } from "./modules/Module.js";
 
-const linkOption = new Option("--link", "Use `npm link` instead of `npm install` (useful during module development)");
+const linkOption = new Option(
+  "--link",
+  "Use `npm link` instead of `npm install` (useful during module development)"
+);
 
-export const handler = async (moduleNames: string[], options: { link: boolean }) => {
+export const handler = async (
+  moduleNames: string[],
+  options: { link: boolean }
+) => {
   try {
     createModulesFolder();
 

@@ -4,6 +4,21 @@ import { ethers } from "ethers";
 import inquirer from "inquirer";
 import ora from "ora";
 
+import {
+  chainOption,
+  l2RpcUrlOption,
+  privateKeyOption,
+} from "../../common/options.js";
+import { l2Chains } from "../../data/chains.js";
+import {
+  getL2Provider,
+  getL2Wallet,
+  logFullCommandFromOptions,
+  optionNameToParam,
+} from "../../utils/helpers.js";
+import Logger from "../../utils/logger.js";
+import { isAddress, isPrivateKey } from "../../utils/validators.js";
+import { getChains } from "../config/chains.js";
 import Program from "./command.js";
 import {
   abiOption,
@@ -13,28 +28,30 @@ import {
   methodOption,
   showTransactionInfoOption,
 } from "./common/options.js";
-import { encodeData, formatArgs, getFragmentFromSignature, getInputsFromSignature } from "./utils/formatters.js";
 import {
+  encodeData,
+  formatArgs,
+  getFragmentFromSignature,
+  getInputsFromSignature,
+} from "./utils/formatters.js";
+import {
+  askAbiMethod,
   checkIfMethodExists,
+  formatMethodString,
   getContractInfoWithLoader,
   readAbiFromFile,
-  askAbiMethod,
-  formatMethodString,
 } from "./utils/helpers.js";
-import { chainOption, l2RpcUrlOption, privateKeyOption } from "../../common/options.js";
-import { l2Chains } from "../../data/chains.js";
-import { getL2Provider, getL2Wallet, logFullCommandFromOptions, optionNameToParam } from "../../utils/helpers.js";
-import Logger from "../../utils/logger.js";
-import { isAddress, isPrivateKey } from "../../utils/validators.js";
-import { getChains } from "../config/chains.js";
 
-import type { ContractInfo } from "./utils/helpers.js";
-import type { DefaultTransactionOptions } from "../../common/options.js";
 import type { TransactionRequest } from "@ethersproject/abstract-provider";
 import type { Command } from "commander";
 import type { DistinctQuestion } from "inquirer";
+import type { DefaultTransactionOptions } from "../../common/options.js";
+import type { ContractInfo } from "./utils/helpers.js";
 
-const valueOption = new Option("--value <Ether amount>", "Ether value to send with transaction (e.g. 0.1)");
+const valueOption = new Option(
+  "--value <Ether amount>",
+  "Ether value to send with transaction (e.g. 0.1)"
+);
 
 type WriteOptions = DefaultTransactionOptions & {
   contract?: string;
@@ -123,34 +140,41 @@ const askArguments = async (method: string, options: WriteOptions) => {
 export const handler = async (options: WriteOptions, context: Command) => {
   try {
     const chains = [...l2Chains, ...getChains()];
-    const answers: Pick<WriteOptions, "chain" | "contract"> = await inquirer.prompt(
-      [
-        {
-          message: chainOption.description,
-          name: optionNameToParam(chainOption.long!),
-          type: "list",
-          choices: chains.map((e) => ({ name: e.name, value: e.network })),
-          required: true,
-          when: (answers: WriteOptions) => !answers.rpc,
-        },
-        {
-          message: contractOption.description,
-          name: optionNameToParam(contractOption.long!),
-          type: "input",
-          required: true,
-          validate: (input: string) => isAddress(input),
-        },
-      ],
-      options
-    );
+    const answers: Pick<WriteOptions, "chain" | "contract"> =
+      await inquirer.prompt(
+        [
+          {
+            message: chainOption.description,
+            name: optionNameToParam(chainOption.long!),
+            type: "list",
+            choices: chains.map((e) => ({ name: e.name, value: e.network })),
+            required: true,
+            when: (answers: WriteOptions) => !answers.rpc,
+          },
+          {
+            message: contractOption.description,
+            name: optionNameToParam(contractOption.long!),
+            type: "input",
+            required: true,
+            validate: (input: string) => isAddress(input),
+          },
+        ],
+        options
+      );
 
     options.chain = answers.chain;
     options.contract = answers.contract;
 
-    const selectedChain = options.rpc ? undefined : chains.find((e) => e.network === options.chain);
+    const selectedChain = options.rpc
+      ? undefined
+      : chains.find((e) => e.network === options.chain);
     const provider = getL2Provider(options.rpc || selectedChain!.rpcUrl);
 
-    const contractInfo = await getContractInfoWithLoader(selectedChain, provider, options.contract!);
+    const contractInfo = await getContractInfoWithLoader(
+      selectedChain,
+      provider,
+      options.contract!
+    );
     if (contractInfo.implementation) {
       Logger.info(
         `${chalk.green("✔")} ${chalk.bold("Contract implementation address")} ${chalk.cyan(
@@ -192,7 +216,10 @@ export const handler = async (options: WriteOptions, context: Command) => {
       ],
       options
     );
-    const senderWallet = getL2Wallet(options.privateKey || privateKey, provider);
+    const senderWallet = getL2Wallet(
+      options.privateKey || privateKey,
+      provider
+    );
     const transaction: TransactionRequest = {
       from: senderWallet.address,
       to: contractInfo.address,
@@ -202,17 +229,29 @@ export const handler = async (options: WriteOptions, context: Command) => {
 
     Logger.info("");
     if (options.showInfo) {
-      Logger.info(chalk.gray("Transaction request: " + JSON.stringify(transaction, null, 2)));
+      Logger.info(
+        chalk.gray(
+          "Transaction request: " + JSON.stringify(transaction, null, 2)
+        )
+      );
     }
     const spinner = ora("Calling contract method...").start();
     try {
       const response = await senderWallet.sendTransaction(transaction);
-      spinner.succeed(`Transaction submitted. Transaction hash: ${chalk.cyanBright(response.hash)}`);
+      spinner.succeed(
+        `Transaction submitted. Transaction hash: ${chalk.cyanBright(response.hash)}`
+      );
       if (options.showInfo) {
-        Logger.info(chalk.gray("Transaction response: " + JSON.stringify(response, null, 2)));
+        Logger.info(
+          chalk.gray(
+            "Transaction response: " + JSON.stringify(response, null, 2)
+          )
+        );
       }
 
-      const receiptSpinner = ora("Waiting for transaction to be processed...").start();
+      const receiptSpinner = ora(
+        "Waiting for transaction to be processed..."
+      ).start();
       try {
         const receipt = await response.wait();
         if (receipt.status) {
@@ -226,7 +265,11 @@ export const handler = async (options: WriteOptions, context: Command) => {
           receiptSpinner.fail("Transaction failed");
         }
         if (options.showInfo) {
-          Logger.info(chalk.gray("Transaction receipt: " + JSON.stringify(receipt, null, 2)));
+          Logger.info(
+            chalk.gray(
+              "Transaction receipt: " + JSON.stringify(receipt, null, 2)
+            )
+          );
         }
       } catch (error) {
         receiptSpinner.fail("Transaction failed");

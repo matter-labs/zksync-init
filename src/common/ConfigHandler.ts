@@ -14,7 +14,9 @@ class ConfigHandlerClass {
   private loadConfig() {
     if (this.configExists) {
       try {
-        this.internalConfig = JSON.parse(readFileSync(this.configPath, "utf-8"));
+        this.internalConfig = JSON.parse(
+          readFileSync(this.configPath, "utf-8")
+        );
       } catch (error) {
         Logger.error(`Error while reading config file: ${error}`);
       }
@@ -30,7 +32,10 @@ class ConfigHandlerClass {
     return fileOrDirExists(this.configPath);
   }
 
-  private accessNestedProperty(path: string, createIfNotExist: boolean = false) {
+  private accessNestedProperty(
+    path: string,
+    createIfNotExist: boolean = false
+  ) {
     const keys = path.split(".");
     let current = this.internalConfig;
     for (let i = 0; i < keys.length - 1; i++) {

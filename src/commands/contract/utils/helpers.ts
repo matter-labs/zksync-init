@@ -1,18 +1,18 @@
+import fs from "fs";
 import chalk from "chalk";
 import { ethers } from "ethers";
-import fs from "fs";
 import inquirer from "inquirer";
 import ora from "ora";
 
-import { getMethodId } from "./formatters.js";
-import { getProxyImplementation } from "./proxy.js";
 import { fileOrDirExists } from "../../../utils/files.js";
 import { formatSeparator } from "../../../utils/formatters.js";
 import Logger from "../../../utils/logger.js";
+import { getMethodId } from "./formatters.js";
+import { getProxyImplementation } from "./proxy.js";
 
-import type { L2Chain } from "../../../data/chains.js";
 import type { AsyncDynamicQuestionProperty, DistinctChoice } from "inquirer";
 import type { Provider } from "zksync-ethers";
+import type { L2Chain } from "../../../data/chains.js";
 
 export type ABI = Record<string, unknown>[];
 export type ContractInfo = {
@@ -28,11 +28,16 @@ export const formatMethodString = (method: string): string => {
   return method.substring("function ".length).replace(/\).+$/, ")");
 };
 
-export const getMethodsFromAbi = (abi: ABI, type: "read" | "write" | "any"): ethers.utils.FunctionFragment[] => {
+export const getMethodsFromAbi = (
+  abi: ABI,
+  type: "read" | "write" | "any"
+): ethers.utils.FunctionFragment[] => {
   const getReadMethods = () => {
     const readMethods = abi.filter(
       (fragment) =>
-        fragment.type === "function" && (fragment.stateMutability === "view" || fragment.stateMutability === "pure")
+        fragment.type === "function" &&
+        (fragment.stateMutability === "view" ||
+          fragment.stateMutability === "pure")
     );
     const contractInterface = new ethers.utils.Interface(readMethods);
     return contractInterface.fragments as ethers.utils.FunctionFragment[];
@@ -41,7 +46,8 @@ export const getMethodsFromAbi = (abi: ABI, type: "read" | "write" | "any"): eth
     const writeMethods = abi.filter(
       (fragment) =>
         fragment.type === "function" &&
-        (fragment.stateMutability === "nonpayable" || fragment.stateMutability === "payable")
+        (fragment.stateMutability === "nonpayable" ||
+          fragment.stateMutability === "payable")
     );
     const contractInterface = new ethers.utils.Interface(writeMethods);
     return contractInterface.fragments as ethers.utils.FunctionFragment[];
@@ -54,21 +60,34 @@ export const getMethodsFromAbi = (abi: ABI, type: "read" | "write" | "any"): eth
   return [...getReadMethods(), ...getWriteMethods()];
 };
 
-export const checkIfMethodExists = (contractInfo: ContractInfo, method: string) => {
+export const checkIfMethodExists = (
+  contractInfo: ContractInfo,
+  method: string
+) => {
   const methodId = getMethodId(method);
   if (!contractInfo.bytecode.includes(methodId)) {
     if (!contractInfo.implementation) {
-      Logger.warn("Provided method is not part of the contract and will only work if provided contract is a proxy");
+      Logger.warn(
+        "Provided method is not part of the contract and will only work if provided contract is a proxy"
+      );
     } else if (!contractInfo.implementation.bytecode.includes(methodId)) {
-      Logger.warn("Provided method is not part of the provided contract nor its implementation");
+      Logger.warn(
+        "Provided method is not part of the provided contract nor its implementation"
+      );
     }
   }
 };
 
-export const getContractABI = async (chain: L2Chain, contractAddress: string) => {
+export const getContractABI = async (
+  chain: L2Chain,
+  contractAddress: string
+) => {
   if (!chain.verificationApiUrl) return;
-  const response = await fetch(`${chain.verificationApiUrl}/contract_verification/info/${contractAddress}`);
-  const decoded: { artifacts: { abi: Record<string, unknown>[] } } = await response.json();
+  const response = await fetch(
+    `${chain.verificationApiUrl}/contract_verification/info/${contractAddress}`
+  );
+  const decoded: { artifacts: { abi: Record<string, unknown>[] } } =
+    await response.json();
   return decoded.artifacts.abi;
 };
 
@@ -86,7 +105,9 @@ export const readAbiFromFile = (abiFilePath: string): ABI => {
     }
     throw new Error("ABI wasn't found in the provided file");
   } catch (error) {
-    throw new Error(`Failed to parse ABI file: ${error instanceof Error ? error.message : error}`);
+    throw new Error(
+      `Failed to parse ABI file: ${error instanceof Error ? error.message : error}`
+    );
   }
 };
 
@@ -98,7 +119,9 @@ export const getContractInformation = async (
 ): Promise<ContractInfo> => {
   const [bytecode, abi] = await Promise.all([
     provider.getCode(contractAddress),
-    chain ? getContractABI(chain, contractAddress).catch(() => undefined) : undefined,
+    chain
+      ? getContractABI(chain, contractAddress).catch(() => undefined)
+      : undefined,
   ]);
   const contractInfo: ContractInfo = {
     address: contractAddress,
@@ -107,9 +130,16 @@ export const getContractInformation = async (
   };
 
   if (options?.fetchImplementation) {
-    const implementationAddress = await getProxyImplementation(contractAddress, provider).catch(() => undefined);
+    const implementationAddress = await getProxyImplementation(
+      contractAddress,
+      provider
+    ).catch(() => undefined);
     if (implementationAddress) {
-      const implementation = await getContractInformation(chain, provider, implementationAddress);
+      const implementation = await getContractInformation(
+        chain,
+        provider,
+        implementationAddress
+      );
       contractInfo.implementation = implementation;
     }
   }
@@ -124,7 +154,12 @@ export const getContractInfoWithLoader = async (
 ): Promise<ContractInfo> => {
   const spinner = ora("Fetching contract information...").start();
   try {
-    const contractInfo = await getContractInformation(chain, provider, contractAddress, { fetchImplementation: true });
+    const contractInfo = await getContractInformation(
+      chain,
+      provider,
+      contractAddress,
+      { fetchImplementation: true }
+    );
     if (contractInfo.bytecode === "0x") {
       throw new Error("Provided address is not a contract");
     }
@@ -145,7 +180,9 @@ export const askAbiMethod = async (
     return "manual";
   }
 
-  const formatFragment = (fragment: ethers.utils.FunctionFragment): DistinctChoice => {
+  const formatFragment = (
+    fragment: ethers.utils.FunctionFragment
+  ): DistinctChoice => {
     let name = fragment.format(ethers.utils.FormatTypes.full);
     if ((type === "write" || type === "any") && name.includes(" returns ")) {
       name = name.substring(0, name.indexOf(" returns ")); // remove return type for write methods
@@ -158,10 +195,22 @@ export const askAbiMethod = async (
 
   const choices: AsyncDynamicQuestionProperty<DistinctChoice[]> = [];
   const separators = {
-    noReadMethods: { type: "separator", line: chalk.white("No read methods found") } as DistinctChoice,
-    noWriteMethods: { type: "separator", line: chalk.white("No write methods found") } as DistinctChoice,
-    noMethods: { type: "separator", line: chalk.white("No methods found") } as DistinctChoice,
-    contractNotVerified: { type: "separator", line: chalk.white("Contract is not verified") } as DistinctChoice,
+    noReadMethods: {
+      type: "separator",
+      line: chalk.white("No read methods found"),
+    } as DistinctChoice,
+    noWriteMethods: {
+      type: "separator",
+      line: chalk.white("No write methods found"),
+    } as DistinctChoice,
+    noMethods: {
+      type: "separator",
+      line: chalk.white("No methods found"),
+    } as DistinctChoice,
+    contractNotVerified: {
+      type: "separator",
+      line: chalk.white("Contract is not verified"),
+    } as DistinctChoice,
   };
   choices.push(formatSeparator("Provided contract") as DistinctChoice);
   if (contractInfo.abi) {
@@ -182,8 +231,13 @@ export const askAbiMethod = async (
   }
   if (contractInfo?.implementation) {
     if (contractInfo.implementation.abi) {
-      choices.push(formatSeparator("Resolved implementation") as DistinctChoice);
-      const implementationMethods = getMethodsFromAbi(contractInfo.implementation.abi, type);
+      choices.push(
+        formatSeparator("Resolved implementation") as DistinctChoice
+      );
+      const implementationMethods = getMethodsFromAbi(
+        contractInfo.implementation.abi,
+        type
+      );
       if (implementationMethods.length) {
         choices.push(...implementationMethods.map(formatFragment));
       } else {
@@ -206,17 +260,18 @@ export const askAbiMethod = async (
     value: "manual",
   });
 
-  const { method }: { method: ethers.utils.FunctionFragment | "manual" } = await inquirer.prompt([
-    {
-      message: "Contract method to call",
-      name: "method",
-      type: "list",
-      choices,
-      required: true,
-      pageSize: 10,
-      loop: false,
-    },
-  ]);
+  const { method }: { method: ethers.utils.FunctionFragment | "manual" } =
+    await inquirer.prompt([
+      {
+        message: "Contract method to call",
+        name: "method",
+        type: "list",
+        choices,
+        required: true,
+        pageSize: 10,
+        loop: false,
+      },
+    ]);
 
   return method;
 };

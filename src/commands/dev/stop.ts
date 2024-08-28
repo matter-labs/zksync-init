@@ -1,6 +1,6 @@
+import Logger from "../../utils/logger.js";
 import Program from "./command.js";
 import { modulesConfigHandler } from "./ModulesConfigHandler.js";
-import Logger from "../../utils/logger.js";
 
 export const handler = async (modulePackageNames: string[]) => {
   try {
@@ -19,7 +19,11 @@ export const handler = async (modulePackageNames: string[]) => {
       modules.push(...configModules);
     }
     Logger.info(`Stopping: ${modules.map((m) => m.name).join(", ")}...`);
-    await Promise.all(modules.map((m) => m.isInstalled().then((installed) => (installed ? m.stop() : undefined))));
+    await Promise.all(
+      modules.map((m) =>
+        m.isInstalled().then((installed) => (installed ? m.stop() : undefined))
+      )
+    );
   } catch (error) {
     Logger.error("There was an error while stopping the testing environment:");
     Logger.error(error);

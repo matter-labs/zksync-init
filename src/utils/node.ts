@@ -5,7 +5,9 @@ let nodeVersion: string | undefined;
 export const getNodeVersion = async () => {
   if (nodeVersion) return nodeVersion;
   try {
-    const version = (await executeCommand("node --version", { silent: true })).trim();
+    const version = (
+      await executeCommand("node --version", { silent: true })
+    ).trim();
     const vIndex = version.indexOf("v");
     if (vIndex === -1) {
       return version;

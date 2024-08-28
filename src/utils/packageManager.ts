@@ -12,7 +12,10 @@ interface PackageManagerMethods {
 }
 
 // The package manager implementations
-export const packageManagers: Record<PackageManagerType, PackageManagerMethods> = {
+export const packageManagers: Record<
+  PackageManagerType,
+  PackageManagerMethods
+> = {
   npm: {
     install(packages?: string): string {
       return `npm install${packages ? ` ${packages}` : ""} --force`;

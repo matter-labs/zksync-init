@@ -17,8 +17,10 @@ export function useDecimals(decimals: number): {
   bigNumberToDecimal: (amount: BigNumberish) => string;
 } {
   return {
-    decimalToBigNumber: (amount: string) => decimalToBigNumber(amount, decimals),
-    bigNumberToDecimal: (amount: BigNumberish) => bigNumberToDecimal(amount, decimals),
+    decimalToBigNumber: (amount: string) =>
+      decimalToBigNumber(amount, decimals),
+    bigNumberToDecimal: (amount: BigNumberish) =>
+      bigNumberToDecimal(amount, decimals),
   };
 }
 
@@ -41,7 +43,11 @@ export type LogEntry =
       list?: LogEntry[];
     };
 
-const formatLogEntry = (entry: LogEntry, indentation = "", defaultColor = chalk.blueBright): string => {
+const formatLogEntry = (
+  entry: LogEntry,
+  indentation = "",
+  defaultColor = chalk.blueBright
+): string => {
   function formatString(text: string): string {
     if (!text.trimStart().startsWith("-")) {
       text = `- ${text}`;
@@ -55,7 +61,9 @@ const formatLogEntry = (entry: LogEntry, indentation = "", defaultColor = chalk.
     const { text, list } = entry;
     const formattedText = formatString(text);
     if (list && list.length > 0) {
-      const subEntries = list.map((item) => formatLogEntry(item, indentation + " ", defaultColor)).join("\n");
+      const subEntries = list
+        .map((item) => formatLogEntry(item, indentation + " ", defaultColor))
+        .join("\n");
       return `${formattedText}\n${subEntries}`;
     } else {
       return formattedText;
@@ -63,8 +71,14 @@ const formatLogEntry = (entry: LogEntry, indentation = "", defaultColor = chalk.
   }
 };
 
-export const formatLogs = (logs: LogEntry[], indentation = "", defaultColor = chalk.blueBright): string => {
-  return logs.map((entry) => formatLogEntry(entry, indentation, defaultColor)).join("\n");
+export const formatLogs = (
+  logs: LogEntry[],
+  indentation = "",
+  defaultColor = chalk.blueBright
+): string => {
+  return logs
+    .map((entry) => formatLogEntry(entry, indentation, defaultColor))
+    .join("\n");
 };
 
 export const formatSeparator = (text: string) => {

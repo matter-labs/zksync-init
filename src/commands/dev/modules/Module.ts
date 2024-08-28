@@ -1,7 +1,11 @@
 import fs from "fs";
 import path from "path";
 
-import { fileOrDirExists, getLocalPath, writeFile } from "../../../utils/files.js";
+import {
+  fileOrDirExists,
+  getLocalPath,
+  writeFile,
+} from "../../../utils/files.js";
 import Logger from "../../../utils/logger.js";
 
 import type { L2Chain } from "../../../data/chains.js";
@@ -85,9 +89,13 @@ abstract class Module<TModuleConfig = ModuleConfigDefault> {
       return {} as TModuleConfig;
     } else {
       try {
-        return JSON.parse(fs.readFileSync(this.configPath, { encoding: "utf-8" }));
+        return JSON.parse(
+          fs.readFileSync(this.configPath, { encoding: "utf-8" })
+        );
       } catch {
-        Logger.error(`There was an error while reading config file for module "${this.name}":`);
+        Logger.error(
+          `There was an error while reading config file for module "${this.name}":`
+        );
         return {} as TModuleConfig;
       }
     }
@@ -111,10 +119,15 @@ abstract class Module<TModuleConfig = ModuleConfigDefault> {
 export default Module;
 
 export type NodeInfo = L2Chain;
-export abstract class ModuleNode<TModuleConfig = ModuleConfigDefault> extends Module<TModuleConfig> {
+export abstract class ModuleNode<
+  TModuleConfig = ModuleConfigDefault,
+> extends Module<TModuleConfig> {
   abstract get nodeInfo(): NodeInfo;
 
-  constructor(data: Omit<DefaultModuleFields, "category">, modulesConfigHandler: ConfigHandler) {
+  constructor(
+    data: Omit<DefaultModuleFields, "category">,
+    modulesConfigHandler: ConfigHandler
+  ) {
     super({ ...data, category: ModuleCategory.Node }, modulesConfigHandler);
   }
 }

@@ -1,16 +1,16 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
 
-import Program from "./command.js";
-import { ModuleCategory } from "./modules/Module.js";
-import { modulesConfigHandler } from "./ModulesConfigHandler.js";
 import { formatSeparator } from "../../utils/formatters.js";
 import Logger from "../../utils/logger.js";
 import { getChains, promptAddNewChain } from "../config/chains.js";
+import Program from "./command.js";
+import { ModuleCategory } from "./modules/Module.js";
+import { modulesConfigHandler } from "./ModulesConfigHandler.js";
 
+import type { L2Chain } from "../../data/chains.js";
 import type Module from "./modules/Module.js";
 import type { ModuleNode, NodeInfo } from "./modules/Module.js";
-import type { L2Chain } from "../../data/chains.js";
 
 type LocalConfigOptions = {
   node?: string;
@@ -30,11 +30,15 @@ export const setupConfig = async (options: LocalConfigOptions = {}) => {
   const modules = await modulesConfigHandler.getAllModules();
   if (!modules.length) {
     Logger.error("No installed modules were found");
-    Logger.error("Run `npx zksync-cli dev install [module-name...]` to install modules.");
+    Logger.error(
+      "Run `npx zksync-cli dev install [module-name...]` to install modules."
+    );
     return;
   }
 
-  const nodes = modules.filter((module) => module.category === ModuleCategory.Node);
+  const nodes = modules.filter(
+    (module) => module.category === ModuleCategory.Node
+  );
   const chains = getChains();
 
   const nodeAnswers: LocalConfigOptions = await inquirer.prompt(
@@ -87,18 +91,24 @@ export const setupConfig = async (options: LocalConfigOptions = {}) => {
     nodeInfo = chain;
     modulesConfigHandler.setCustomChain(chain.network);
   } else {
-    selectedNode = modules.find((module) => module.package.name === options.node)! as ModuleNode;
+    selectedNode = modules.find(
+      (module) => module.package.name === options.node
+    )! as ModuleNode;
     nodeInfo = selectedNode.nodeInfo;
     modulesConfigHandler.setCustomChain(undefined);
   }
 
-  const potentialModules = modules.filter((module) => module.category !== ModuleCategory.Node);
+  const potentialModules = modules.filter(
+    (module) => module.category !== ModuleCategory.Node
+  );
   const modulesWithSupportInfo = await Promise.all(
     potentialModules.map(async (module) => {
       try {
         return {
           instance: module,
-          unsupported: (await module.isNodeSupported(nodeInfo)) ? false : "Module doesn't support selected node",
+          unsupported: (await module.isNodeSupported(nodeInfo))
+            ? false
+            : "Module doesn't support selected node",
         };
       } catch {
         return {
@@ -149,7 +159,9 @@ export const setupConfig = async (options: LocalConfigOptions = {}) => {
 
   Logger.debug("Saving configuration to dev config file...");
 
-  const selectedAdditionalModules = options.modules!.map((module) => modules.find((m) => m.package.name === module)!);
+  const selectedAdditionalModules = options.modules!.map(
+    (module) => modules.find((m) => m.package.name === module)!
+  );
 
   modulesConfigHandler.setConfigModules([
     ...(selectedNode ? [selectedNode.package.name] : []),
@@ -159,16 +171,24 @@ export const setupConfig = async (options: LocalConfigOptions = {}) => {
 
 export const handler = async (options: LocalConfigOptions = {}) => {
   try {
-    Logger.debug(`Initial dev config options: ${JSON.stringify(options, null, 2)}`);
+    Logger.debug(
+      `Initial dev config options: ${JSON.stringify(options, null, 2)}`
+    );
 
     await setupConfig(options);
 
     Logger.info("\nConfiguration saved successfully!", { noFormat: true });
-    Logger.info(`Start configured environment with \`${chalk.magentaBright("npx zksync-cli dev start")}\``);
+    Logger.info(
+      `Start configured environment with \`${chalk.magentaBright("npx zksync-cli dev start")}\``
+    );
   } catch (error) {
-    Logger.error("There was an error while configuring the testing environment:");
+    Logger.error(
+      "There was an error while configuring the testing environment:"
+    );
     Logger.error(error);
   }
 };
 
-Program.command("config").description("Select modules to run in local development environment").action(handler);
+Program.command("config")
+  .description("Select modules to run in local development environment")
+  .action(handler);

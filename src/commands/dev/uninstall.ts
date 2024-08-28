@@ -1,19 +1,22 @@
 import { Option } from "commander";
 
+import { executeCommand } from "../../utils/helpers.js";
+import Logger from "../../utils/logger.js";
 import { cleanModule } from "./clean.js";
 import Program from "./command.js";
 import { createModulesFolder, modulesPath } from "./modules/Module.js";
 import { findDefaultModules } from "./modules/utils/packages.js";
 import { modulesConfigHandler } from "./ModulesConfigHandler.js";
-import { executeCommand } from "../../utils/helpers.js";
-import Logger from "../../utils/logger.js";
 
 const unlinkOption = new Option(
   "--unlink",
   "Use `npm unlink` instead of `npm uninstall` (useful during module development)"
 );
 
-export const handler = async (moduleNames: string[], options: { unlink: boolean }) => {
+export const handler = async (
+  moduleNames: string[],
+  options: { unlink: boolean }
+) => {
   try {
     if (!options.unlink) {
       const defaultModules = await findDefaultModules();
@@ -26,7 +29,11 @@ export const handler = async (moduleNames: string[], options: { unlink: boolean 
     }
 
     const modules = await modulesConfigHandler.getAllModules();
-    await Promise.all(modules.filter((e) => moduleNames.includes(e.package.name)).map((module) => cleanModule(module)));
+    await Promise.all(
+      modules
+        .filter((e) => moduleNames.includes(e.package.name))
+        .map((module) => cleanModule(module))
+    );
 
     createModulesFolder();
 

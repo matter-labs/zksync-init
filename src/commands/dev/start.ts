@@ -1,13 +1,13 @@
 import chalk from "chalk";
 import ora from "ora";
 
+import { formatLogs } from "../../utils/formatters.js";
+import Logger from "../../utils/logger.js";
 import Program from "./command.js";
 import { setupConfig } from "./config.js";
 import { ModuleCategory } from "./modules/Module.js";
 import { getModulesRequiringUpdates } from "./modules/utils/updates.js";
 import { modulesConfigHandler } from "./ModulesConfigHandler.js";
-import { formatLogs } from "../../utils/formatters.js";
-import Logger from "../../utils/logger.js";
 
 import type Module from "./modules/Module.js";
 
@@ -65,7 +65,10 @@ const waitForCustomChainStart = async () => {
             spinner.succeed(`"${nodeInfo.name}" is alive!`);
             resolve();
           } else {
-            Logger.debug("Received unexpected data from eth_blockNumber:", data);
+            Logger.debug(
+              "Received unexpected data from eth_blockNumber:",
+              data
+            );
           }
         } else {
           updateSpinner();
@@ -89,7 +92,9 @@ const startModules = async (modules: Module[]) => {
 
 const stopOtherNodes = async (currentModules: Module[]) => {
   const modules = await modulesConfigHandler.getAllModules();
-  const currentNodeKeys = currentModules.filter((e) => e.category === ModuleCategory.Node).map((m) => m.package.name);
+  const currentNodeKeys = currentModules
+    .filter((e) => e.category === ModuleCategory.Node)
+    .map((m) => m.package.name);
 
   for (const module of modules) {
     if (
@@ -111,7 +116,11 @@ const checkForUpdates = async (modules: Module[]) => {
   }
 
   Logger.info(chalk.yellow("\nModule updates available:"));
-  for (const { module, currentVersion, latestVersion } of modulesRequiringUpdates) {
+  for (const {
+    module,
+    currentVersion,
+    latestVersion,
+  } of modulesRequiringUpdates) {
     let str = `${module.name}: ${latestVersion}`;
     if (currentVersion) {
       str += chalk.gray(` (current: ${currentVersion})`);
@@ -153,19 +162,27 @@ export const handler = async () => {
   try {
     if (!(await modulesConfigHandler.getConfigModules()).length) {
       await setupConfig();
-      Logger.info(`You can change the config later with ${chalk.blueBright("`npx zksync-cli dev config`")}\n`, {
-        noFormat: true,
-      });
+      Logger.info(
+        `You can change the config later with ${chalk.blueBright("`npx zksync-cli dev config`")}\n`,
+        {
+          noFormat: true,
+        }
+      );
     }
 
     const modules = await modulesConfigHandler.getConfigModules();
     if (!modules.length) {
       Logger.warn("Config does not contain any installed modules.");
-      Logger.warn("Run `npx zksync-cli dev config` to select which modules to use.");
+      Logger.warn(
+        "Run `npx zksync-cli dev config` to select which modules to use."
+      );
       return;
     }
 
-    const sortedModules = [...modules.filter((e) => !e.startAfterNode), ...modules.filter((e) => e.startAfterNode)];
+    const sortedModules = [
+      ...modules.filter((e) => !e.startAfterNode),
+      ...modules.filter((e) => e.startAfterNode),
+    ];
     await installModules(sortedModules);
     await stopOtherNodes(sortedModules);
     await startModules(sortedModules);
@@ -178,4 +195,6 @@ export const handler = async () => {
   }
 };
 
-Program.command("start").description("Start local ZKsync environment and modules").action(handler);
+Program.command("start")
+  .description("Start local ZKsync environment and modules")
+  .action(handler);

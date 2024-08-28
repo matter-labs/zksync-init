@@ -2,11 +2,11 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import slugify from "slugify";
 
-import Program from "./command.js";
 import { configHandler } from "../../common/ConfigHandler.js";
 import { l2Chains } from "../../data/chains.js";
 import Logger from "../../utils/logger.js";
 import { isUrl } from "../../utils/validators.js";
+import Program from "./command.js";
 
 import type { Chain, L2Chain } from "../../data/chains.js";
 
@@ -54,14 +54,20 @@ export const promptAddNewChain = async (defaults?: L2Chain) => {
         if (defaults?.name === value) {
           return true;
         }
-        if ([...getChains(), ...l2Chains].find((chain) => chain.name === value)) {
+        if (
+          [...getChains(), ...l2Chains].find((chain) => chain.name === value)
+        ) {
           return "Chain name already exists";
         }
         return true;
       },
     },
   ]);
-  const { network, rpcUrl, explorerUrl }: { network: string; rpcUrl: string; explorerUrl: string } =
+  const {
+    network,
+    rpcUrl,
+    explorerUrl,
+  }: { network: string; rpcUrl: string; explorerUrl: string } =
     await inquirer.prompt([
       {
         message: "Chain key",
@@ -82,7 +88,11 @@ export const promptAddNewChain = async (defaults?: L2Chain) => {
           if (defaults?.network === value) {
             return true;
           }
-          if ([...getChains(), ...l2Chains].find((chain) => chain.network === value)) {
+          if (
+            [...getChains(), ...l2Chains].find(
+              (chain) => chain.network === value
+            )
+          ) {
             return "Chain key already exists";
           }
           return true;
@@ -139,30 +149,35 @@ export const promptAddNewChain = async (defaults?: L2Chain) => {
     },
   ]);
   if (hasL1Chain === "yes") {
-    const { l1_id, l1_name }: { l1_id: string; l1_name: string } = await inquirer.prompt([
-      {
-        message: "L1 Chain id",
-        name: "l1_id",
-        type: "input",
-        default: defaults?.l1Chain?.id,
-        required: true,
-        validate: validateChainId,
-      },
-      {
-        message: "L1 Chain name",
-        name: "l1_name",
-        type: "input",
-        default: defaults?.l1Chain?.name,
-        required: true,
-        validate: (value: string) => {
-          if (!value) {
-            return "Chain name is required";
-          }
-          return true;
+    const { l1_id, l1_name }: { l1_id: string; l1_name: string } =
+      await inquirer.prompt([
+        {
+          message: "L1 Chain id",
+          name: "l1_id",
+          type: "input",
+          default: defaults?.l1Chain?.id,
+          required: true,
+          validate: validateChainId,
         },
-      },
-    ]);
-    const { l1_network, l1_rpcUrl, l1_explorerUrl }: { l1_network: string; l1_rpcUrl: string; l1_explorerUrl: string } =
+        {
+          message: "L1 Chain name",
+          name: "l1_name",
+          type: "input",
+          default: defaults?.l1Chain?.name,
+          required: true,
+          validate: (value: string) => {
+            if (!value) {
+              return "Chain name is required";
+            }
+            return true;
+          },
+        },
+      ]);
+    const {
+      l1_network,
+      l1_rpcUrl,
+      l1_explorerUrl,
+    }: { l1_network: string; l1_rpcUrl: string; l1_explorerUrl: string } =
       await inquirer.prompt([
         {
           message: "L1 Chain key",
@@ -215,7 +230,10 @@ export const promptAddNewChain = async (defaults?: L2Chain) => {
     newChain.l1Chain = l1Chain;
   }
 
-  saveChains([newChain, ...chains.filter((e) => e.network !== defaults?.network)]);
+  saveChains([
+    newChain,
+    ...chains.filter((e) => e.network !== defaults?.network),
+  ]);
   Logger.info(`${chalk.greenBright("✔")} Chain "${name}" saved`);
   return newChain;
 };
@@ -263,27 +281,28 @@ const promptAskChainAction = async (chain: L2Chain) => {
 export const handler = async () => {
   try {
     const chains = getChains();
-    const { chain }: { chain: "add-new-chain" | string } = await inquirer.prompt([
-      {
-        message: "Select a chain",
-        name: "chain",
-        type: "list",
-        choices: [
-          ...chains.map((chain) => ({
-            name: chain.name + chalk.gray(` - ${chain.network}`),
-            short: chain.network,
-            value: chain.network,
-          })),
-          ...(chains.length > 0 ? [{ type: "separator" }] : []),
-          {
-            name: chalk.greenBright("+") + " Add new chain",
-            short: "Add new chain",
-            value: "add-new-chain",
-          },
-        ],
-        required: true,
-      },
-    ]);
+    const { chain }: { chain: "add-new-chain" | string } =
+      await inquirer.prompt([
+        {
+          message: "Select a chain",
+          name: "chain",
+          type: "list",
+          choices: [
+            ...chains.map((chain) => ({
+              name: chain.name + chalk.gray(` - ${chain.network}`),
+              short: chain.network,
+              value: chain.network,
+            })),
+            ...(chains.length > 0 ? [{ type: "separator" }] : []),
+            {
+              name: chalk.greenBright("+") + " Add new chain",
+              short: "Add new chain",
+              value: "add-new-chain",
+            },
+          ],
+          required: true,
+        },
+      ]);
     if (chain === "add-new-chain") {
       await promptAddNewChain();
     } else {
@@ -296,4 +315,6 @@ export const handler = async () => {
   }
 };
 
-Program.command("chains").description("Add or edit available CLI chains").action(handler);
+Program.command("chains")
+  .description("Add or edit available CLI chains")
+  .action(handler);

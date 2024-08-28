@@ -1,8 +1,8 @@
-import chalk from "chalk";
 import fs from "fs";
+import path from "path";
+import chalk from "chalk";
 import inquirer from "inquirer";
 import ora from "ora";
-import path from "path";
 
 import { copyRecursiveSync, fileOrDirExists } from "../../utils/files.js";
 import { cloneRepo } from "../../utils/git.js";
@@ -10,15 +10,17 @@ import { executeCommand } from "../../utils/helpers.js";
 import Logger from "../../utils/logger.js";
 import { packageManagers } from "../../utils/packageManager.js";
 
+import type { PackageManagerType } from "../../utils/packageManager.js";
 import type { Template } from "./groups/quickstart.js";
 import type { GenericTemplate } from "./index.js";
-import type { PackageManagerType } from "../../utils/packageManager.js";
 
 export const getUniqueValues = <T>(arr: T[]) => {
   return Array.from(new Set(arr));
 };
 
-export const askForTemplate = async <T extends GenericTemplate>(templates: T[]) => {
+export const askForTemplate = async <T extends GenericTemplate>(
+  templates: T[]
+) => {
   const { name: templateValue }: { name: T["name"] } = await inquirer.prompt([
     {
       message: "Template",
@@ -34,15 +36,16 @@ export const askForTemplate = async <T extends GenericTemplate>(templates: T[]) 
 };
 
 export const askForPackageManager = async () => {
-  const { packageManager }: { packageManager: PackageManagerType } = await inquirer.prompt([
-    {
-      message: "Package manager",
-      name: "packageManager",
-      type: "list",
-      choices: <PackageManagerType[]>["npm", "pnpm", "yarn", "bun"],
-      required: true,
-    },
-  ]);
+  const { packageManager }: { packageManager: PackageManagerType } =
+    await inquirer.prompt([
+      {
+        message: "Package manager",
+        name: "packageManager",
+        type: "list",
+        choices: <PackageManagerType[]>["npm", "pnpm", "yarn", "bun"],
+        required: true,
+      },
+    ]);
   return packageManager;
 };
 
@@ -51,7 +54,9 @@ const setupEnv = (folderLocation: string, env: Record<string, string>) => {
   const envPath = path.join(folderLocation, ".env");
 
   // Initialize finalEnvContent with the content from .env if it exists or an empty string
-  let finalEnvContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
+  let finalEnvContent = fs.existsSync(envPath)
+    ? fs.readFileSync(envPath, "utf8")
+    : "";
 
   // Keep track of what keys we've seen in the final .env content
   const seenKeys: Record<string, boolean> = {};
@@ -99,7 +104,9 @@ export const setupTemplate = async (
   env: Record<string, string>,
   packageManager?: PackageManagerType
 ) => {
-  Logger.info(`\nSetting up template in ${chalk.magentaBright(folderLocation)}...`);
+  Logger.info(
+    `\nSetting up template in ${chalk.magentaBright(folderLocation)}...`
+  );
   const typedTemplate = template as Template;
   if (typedTemplate.framework === "Foundry") {
     await setupFoundryProject(template, folderLocation);
@@ -119,11 +126,16 @@ export const setupTemplate = async (
 };
 // Sets up a foundry project by initializing it with the specified template.
 // Primarily only used for foundry quickstart templates.
-const setupFoundryProject = async (template: GenericTemplate, folderLocation: string) => {
+const setupFoundryProject = async (
+  template: GenericTemplate,
+  folderLocation: string
+) => {
   const spinner = ora("Initializing foundry project...").start();
 
   try {
-    const isInstalled = await executeCommand("forge --version", { silent: true });
+    const isInstalled = await executeCommand("forge --version", {
+      silent: true,
+    });
     // TODO: https://github.com/matter-labs/zksync-cli/issues/137
     if (!isInstalled) {
       spinner.fail(
@@ -133,11 +145,16 @@ const setupFoundryProject = async (template: GenericTemplate, folderLocation: st
     }
 
     const cloneTempPath = path.join(folderLocation, "___temp");
-    await executeCommand(`forge init --template ${template.git} ${cloneTempPath}`, { silent: true });
+    await executeCommand(
+      `forge init --template ${template.git} ${cloneTempPath}`,
+      { silent: true }
+    );
 
     const templatePath = path.join(cloneTempPath, template.path || "");
     if (!fileOrDirExists(templatePath)) {
-      throw new Error(`The specified template path does not exist: ${templatePath}`);
+      throw new Error(
+        `The specified template path does not exist: ${templatePath}`
+      );
     }
 
     copyRecursiveSync(templatePath, folderLocation);
@@ -151,7 +168,10 @@ const setupFoundryProject = async (template: GenericTemplate, folderLocation: st
 };
 
 // Sets up a Hardhat project by cloning the specified template and copying it to the specified folder location.
-const setupHardhatProject = async (template: GenericTemplate, folderLocation: string) => {
+const setupHardhatProject = async (
+  template: GenericTemplate,
+  folderLocation: string
+) => {
   if (!template.path) {
     const spinner = ora("Cloning template...").start();
     try {
@@ -159,7 +179,9 @@ const setupHardhatProject = async (template: GenericTemplate, folderLocation: st
       try {
         fs.rmSync(path.join(folderLocation, ".git"), { recursive: true });
       } catch {
-        Logger.warn("Failed to remove .git folder. Make sure to remove it manually before pushing to a new repo.");
+        Logger.warn(
+          "Failed to remove .git folder. Make sure to remove it manually before pushing to a new repo."
+        );
       }
       try {
         const githubFolderLocation = path.join(folderLocation, ".github");
@@ -167,7 +189,9 @@ const setupHardhatProject = async (template: GenericTemplate, folderLocation: st
           fs.rmSync(githubFolderLocation, { recursive: true });
         }
       } catch {
-        Logger.warn("Failed to remove .github folder. Make sure to remove it manually before pushing to a new repo.");
+        Logger.warn(
+          "Failed to remove .github folder. Make sure to remove it manually before pushing to a new repo."
+        );
       }
       spinner.succeed("Cloned template");
     } catch (error) {
@@ -191,7 +215,9 @@ const setupHardhatProject = async (template: GenericTemplate, folderLocation: st
           throw new Error("An error occurred while copying the template");
         }
       } else {
-        throw new Error(`The specified template path does not exist: ${templatePath}`);
+        throw new Error(
+          `The specified template path does not exist: ${templatePath}`
+        );
       }
       spinner.succeed("Cloned template");
     } catch (error) {
@@ -201,7 +227,10 @@ const setupHardhatProject = async (template: GenericTemplate, folderLocation: st
   }
 };
 // Sets up environment variables in the specified folder location.
-const setupEnvironmentVariables = async (folderLocation: string, env: Record<string, string>) => {
+const setupEnvironmentVariables = async (
+  folderLocation: string,
+  env: Record<string, string>
+) => {
   const spinner = ora("Setting up environment variables...").start();
   try {
     setupEnv(folderLocation, env);
@@ -212,13 +241,19 @@ const setupEnvironmentVariables = async (folderLocation: string, env: Record<str
   spinner.succeed("Environment variables set up");
 };
 // Install dependencies with the specified package manager in the specified folder location.
-const installDependencies = async (packageManager: PackageManagerType, folderLocation: string) => {
+const installDependencies = async (
+  packageManager: PackageManagerType,
+  folderLocation: string
+) => {
   const spinner = ora(
     `Installing dependencies with ${chalk.bold(packageManager)}... This may take a couple minutes.`
   ).start();
   if (await packageManagers[packageManager].isInstalled()) {
     try {
-      await executeCommand(packageManagers[packageManager].install(), { cwd: folderLocation, silent: true });
+      await executeCommand(packageManagers[packageManager].install(), {
+        cwd: folderLocation,
+        silent: true,
+      });
     } catch (error) {
       spinner.fail("Failed to install dependencies");
       throw error;
@@ -237,7 +272,9 @@ export const successfulMessage = {
   start: (folderName: string) => {
     Logger.info(`\n${chalk.green("🎉 All set up! 🎉")}\n`);
     Logger.info("--------------------------\n", { noFormat: true });
-    Logger.info(`${chalk.magentaBright("Navigate to your project:")} ${chalk.blueBright(`cd ${folderName}`)}\n`);
+    Logger.info(
+      `${chalk.magentaBright("Navigate to your project:")} ${chalk.blueBright(`cd ${folderName}`)}\n`
+    );
   },
   end: (folderName: string) => {
     Logger.info(`${chalk.magentaBright("\nFurther Reading:")}

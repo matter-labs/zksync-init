@@ -4,7 +4,13 @@ import inquirer from "inquirer";
 import Logger from "../../../utils/logger.js";
 import { packageManagers } from "../../../utils/packageManager.js";
 import { isPrivateKey } from "../../../utils/validators.js";
-import { askForTemplate, setupTemplate, askForPackageManager, successfulMessage, getUniqueValues } from "../utils.js";
+import {
+  askForPackageManager,
+  askForTemplate,
+  getUniqueValues,
+  setupTemplate,
+  successfulMessage,
+} from "../utils.js";
 
 import type { GenericTemplate } from "../index.js";
 
@@ -35,20 +41,33 @@ export const templates: Template[] = [
   },
 ];
 
-export default async (folderLocation: string, folderRelativePath: string, templateKey?: string) => {
+export default async (
+  folderLocation: string,
+  folderRelativePath: string,
+  templateKey?: string
+) => {
   let env: Record<string, string> = {};
   let template: Template;
   if (!templateKey) {
-    const { ethereumFramework }: { ethereumFramework: Template["ethereumFramework"] } = await inquirer.prompt([
-      {
-        message: "Ethereum framework",
-        name: "ethereumFramework",
-        type: "list",
-        choices: getUniqueValues(templates.map((template) => template.ethereumFramework)),
-        required: true,
-      },
-    ]);
-    template = await askForTemplate(templates.filter((template) => template.ethereumFramework === ethereumFramework));
+    const {
+      ethereumFramework,
+    }: { ethereumFramework: Template["ethereumFramework"] } =
+      await inquirer.prompt([
+        {
+          message: "Ethereum framework",
+          name: "ethereumFramework",
+          type: "list",
+          choices: getUniqueValues(
+            templates.map((template) => template.ethereumFramework)
+          ),
+          required: true,
+        },
+      ]);
+    template = await askForTemplate(
+      templates.filter(
+        (template) => template.ethereumFramework === ethereumFramework
+      )
+    );
   } else {
     template = templates.find((e) => e.value === templateKey)!;
     Logger.info(`Using ${chalk.magentaBright(template.name)} template`);

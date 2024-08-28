@@ -11,15 +11,25 @@ const checkDockerInstallation = async () => {
     await executeCommand("docker --version", { silent: true });
     dockerInstalled = true;
   } catch {
-    throw new Error("Docker is not installed. Download: https://www.docker.com/get-started/");
+    throw new Error(
+      "Docker is not installed. Download: https://www.docker.com/get-started/"
+    );
   }
 };
 
-const getComposeCommandBase = (dockerComposePath: string, projectDir?: string) => {
+const getComposeCommandBase = (
+  dockerComposePath: string,
+  projectDir?: string
+) => {
   return `docker compose -f ${dockerComposePath} --project-directory ${projectDir ?? path.dirname(dockerComposePath)}`;
 };
 const createComposeCommand =
-  (action: string) => async (dockerComposePath: string, projectDir?: string, additionalArgs?: string[]) => {
+  (action: string) =>
+  async (
+    dockerComposePath: string,
+    projectDir?: string,
+    additionalArgs?: string[]
+  ) => {
     await checkDockerInstallation();
     const baseCommand = getComposeCommandBase(dockerComposePath, projectDir);
     const args = additionalArgs ? `${additionalArgs.join(" ")}` : "";
@@ -39,12 +49,18 @@ interface ContainerInfo {
   name: string;
   isRunning: boolean;
 }
-export const composeStatus = async (dockerComposePath: string, projectDir?: string): Promise<ContainerInfo[]> => {
+export const composeStatus = async (
+  dockerComposePath: string,
+  projectDir?: string
+): Promise<ContainerInfo[]> => {
   await checkDockerInstallation();
   let statusJson = (
-    await executeCommand(`${getComposeCommandBase(dockerComposePath, projectDir)} ps --format json --all`, {
-      silent: true,
-    })
+    await executeCommand(
+      `${getComposeCommandBase(dockerComposePath, projectDir)} ps --format json --all`,
+      {
+        silent: true,
+      }
+    )
   ).trim(); // trim to remove leading and trailing whitespace
 
   // if no containers are mounted, docker compose returns an empty string
@@ -61,10 +77,14 @@ export const composeStatus = async (dockerComposePath: string, projectDir?: stri
 
     return containers.map((container) => ({
       name: container.Name,
-      isRunning: container.State === ContainerStatus.Running || container.State === ContainerStatus.Restarting,
+      isRunning:
+        container.State === ContainerStatus.Running ||
+        container.State === ContainerStatus.Restarting,
     }));
   } catch (error) {
-    Logger.debug(`Failed to JSON.parse compose status ${dockerComposePath}: ${error?.toString()}`);
+    Logger.debug(
+      `Failed to JSON.parse compose status ${dockerComposePath}: ${error?.toString()}`
+    );
     Logger.debug(statusJson);
     return [];
   }
@@ -76,15 +96,20 @@ export const composeLogs = async (
 ): Promise<string[]> => {
   await checkDockerInstallation();
   const response = (
-    await executeCommand(`${getComposeCommandBase(dockerComposePath, projectDir)} logs --tail=${totalLines}`, {
-      silent: true,
-    })
+    await executeCommand(
+      `${getComposeCommandBase(dockerComposePath, projectDir)} logs --tail=${totalLines}`,
+      {
+        silent: true,
+      }
+    )
   ).trim(); // trim to remove leading and trailing whitespace
 
   try {
     return response.split("\n");
   } catch (error) {
-    Logger.debug(`Failed to split compose logs ${dockerComposePath}: ${error?.toString()}`);
+    Logger.debug(
+      `Failed to split compose logs ${dockerComposePath}: ${error?.toString()}`
+    );
     return [];
   }
 };

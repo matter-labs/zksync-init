@@ -1,0 +1,31 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "eslint.useFlatConfig": true,
+  "typescript.suggest.paths": false,
+  "npm-intellisense.importES6": true,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.rulers": [80],
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.removeUnusedImports": "always"
+    }
+  },
+  "[markdown]": {
+    "editor.rulers": [100],
+    "editor.wordWrap": "wordWrapColumn",
+    "rewrap.autoWrap.enabled": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "never"
+    },
+    "editor.quickSuggestions": {
+      "other": "off",
+      "comments": "off",
+      "strings": "off"
+    },
+    "editor.suggest.showWords": false,
+    "editor.tabCompletion": "onlySnippets"
+  }
+}

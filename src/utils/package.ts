@@ -1,6 +1,6 @@
-import chalk from "chalk";
 import { readFileSync } from "fs";
 import path from "path";
+import chalk from "chalk";
 import updateNotifier from "update-notifier";
 
 import { getDirPath } from "./files.js";
@@ -11,7 +11,12 @@ export const Package: {
   name: string;
   description: string;
   version: string;
-} = JSON.parse(readFileSync(path.join(getDirPath(import.meta.url), "../../package.json"), "utf-8"));
+} = JSON.parse(
+  readFileSync(
+    path.join(getDirPath(import.meta.url), "../../package.json"),
+    "utf-8"
+  )
+);
 
 export const checkForUpdates = async () => {
   if (Package.version === "0.0.0-development") return;
